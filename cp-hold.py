@@ -60,7 +60,7 @@ def syncprocessor():
 
 def show_warning():
     rgb = rgbcontroller.RGBController()
-    for counter in range(0, 2):
+    for counter in range(0, 4):
         counter += 1
         rgb.turn_on(WARNING_SIGNAL)
         time.sleep(1)
@@ -151,7 +151,7 @@ if __name__ == '__main__':
                 # if cmd == 'warning':
                 # Just tell the rear unit to signal warning,
                 # the sync response to the warning turns the ping
-                # leds on steady for 2 seconds
+                # leds on steady for several seconds
                 print(cmd)
                 publish.single(MQTT_CMD_PATH, cmd, hostname=MQTT_SERVER)
 
