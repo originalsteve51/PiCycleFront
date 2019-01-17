@@ -3,6 +3,7 @@ import time
 from threading import Thread
 
 from cp_pins import *
+from signalcontroller import *
 
 import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
@@ -25,18 +26,24 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(MQTT_SYNC_PATH)
 
 def on_message(client, userdata, msg):
-    print (msg.topic,': '+str(msg.payload))
+    # print (msg.topic,': '+str(msg.payload))
     if msg.payload == b'on:r':
         rgb.turn_on(RIGHT_SIGNAL)
+        sig_ctl.arrow('right', 'on')
     if msg.payload == b'on:l':
         rgb.turn_on(LEFT_SIGNAL)
+        sig_ctl.arrow('left', 'on')
     if msg.payload == b'off:r':
         rgb.turn_off(RIGHT_SIGNAL)
+        sig_ctl.arrow('right', 'off')
     if msg.payload == b'off:l':
         rgb.turn_off(LEFT_SIGNAL)
+        sig_ctl.arrow('left', 'off')
     if msg.payload == b'stop:both':
         rgb.turn_off(RIGHT_SIGNAL)
         rgb.turn_off(LEFT_SIGNAL)
+        sig_ctl.arrow('right', 'off')
+        sig_ctl.arrow('left', 'off')
     if msg.payload == b'brake:on':
         rgb.turn_on(BRAKE_SIGNAL)
     if msg.payload == b'brake:off':
@@ -100,6 +107,7 @@ if __name__ == '__main__':
     try:
 
         rgb = rgbcontroller.RGBController()
+        sig_ctl = SignalController()
 
         GPIO.setmode(GPIO.BCM)
 
