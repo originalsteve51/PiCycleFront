@@ -17,7 +17,7 @@ MQTT_CMD_PATH = "commands"
 
 
 RIGHT_SIGNAL = 'r'
-BRAKE_SIGNAL = 'g'
+RECORD_SIGNAL = 'g'
 LEFT_SIGNAL = 'w'
 WARNING_SIGNAL = 'b'
 
@@ -44,14 +44,19 @@ def on_message(client, userdata, msg):
         rgb.turn_off(LEFT_SIGNAL)
         sig_ctl.arrow('right', 'off')
         sig_ctl.arrow('left', 'off')
-    if msg.payload == b'brake:on':
-        rgb.turn_on(BRAKE_SIGNAL)
-    if msg.payload == b'brake:off':
-        rgb.turn_off(BRAKE_SIGNAL)
+    if msg.payload == b'start-recording':
+        GPIO.output(PING_ACK_LED, GPIO.HIGH)
+        # rgb.turn_on(RECORD_SIGNAL)
+    if msg.payload == b'stop-recording':
+        GPIO.output(PING_ACK_LED, GPIO.LOW)
+        # rgb.turn_off(RECORD_SIGNAL)
+    """
     if msg.payload == b'ping:ack':
         GPIO.output(PING_ACK_LED, GPIO.HIGH)
         time.sleep(0.02)
         GPIO.output(PING_ACK_LED, GPIO.LOW)
+    """
+
     if msg.payload == b'warning:ack':
         # flash ping leds for 2 seconds
         warningThread = Thread(target=show_warning)
@@ -67,11 +72,12 @@ def syncprocessor():
 
 def show_warning():
     rgb = rgbcontroller.RGBController()
-    for counter in range(0, 4):
+    for counter in range(0, 10):
         counter += 1
         rgb.turn_on(WARNING_SIGNAL)
         time.sleep(1)
         rgb.turn_off(WARNING_SIGNAL)
+    publish.single(MQTT_CMD_PATH, 'warning:off', hostname=MQTT_SERVER)
 
 
 
@@ -86,23 +92,28 @@ if __name__ == '__main__':
             GPIO.output(PING_OUT_LED, GPIO.LOW)
             time.sleep(1.98)
 
-    def process_brake_requests():
+    def process_record_requests():
         while True:
             cmd = None
-            if GPIO.input(BRAKE_SIGNAL_PIN) == 1:
-                cmd = 'brake'
+            if GPIO.input(RECORD_SIGNAL_PIN) == 1:
+                cmd = 'record'
             if cmd is not None:
                 print(cmd)
                 publish.single(MQTT_CMD_PATH, cmd, hostname=MQTT_SERVER)
-                if cmd == 'brake':
-                    while GPIO.input(BRAKE_SIGNAL_PIN) == 1:
+                if cmd == 'record':
+                    while GPIO.input(RECORD_SIGNAL_PIN) == 1:
                         pass
-                    cmd = 'brake-off'
+                    cmd = 'record-off'
                 print(cmd)
                 publish.single(MQTT_CMD_PATH, cmd, hostname=MQTT_SERVER)
 
             time.sleep(0.2)
 
+    def process_warning_requests():
+        while True:
+            if GPIO.input(WARNING_PIN) == 1:
+                publish.single(MQTT_CMD_PATH, 'warning', hostname=MQTT_SERVER)
+            time.sleep(0.2)
 
     try:
 
@@ -113,7 +124,7 @@ if __name__ == '__main__':
 
         # prepare switch input pins for use
         GPIO.setup(RIGHT_SIGNAL_PIN, GPIO.IN, GPIO.PUD_DOWN)
-        GPIO.setup(BRAKE_SIGNAL_PIN, GPIO.IN, GPIO.PUD_DOWN)
+        GPIO.setup(RECORD_SIGNAL_PIN, GPIO.IN, GPIO.PUD_DOWN)
         GPIO.setup(LEFT_SIGNAL_PIN, GPIO.IN, GPIO.PUD_DOWN)
         GPIO.setup(WARNING_PIN, GPIO.IN, GPIO.PUD_DOWN)
 
@@ -125,11 +136,14 @@ if __name__ == '__main__':
         syncThread = Thread(target=syncprocessor)
         syncThread.start()
 
-        pingThread = Thread(target=ping_mqtt_server)
-        pingThread.start()
+        # pingThread = Thread(target=ping_mqtt_server)
+        # pingThread.start()
 
-        brakeThread = Thread(target=process_brake_requests)
-        brakeThread.start()
+        recordThread = Thread(target=process_record_requests)
+        recordThread.start()
+
+        warningThread = Thread(target=process_warning_requests)
+        warningThread.start()
 
 
 
@@ -141,12 +155,9 @@ if __name__ == '__main__':
             if GPIO.input(RIGHT_SIGNAL_PIN) == 1:
                 rgb.go_dark()
                 cmd = 'right'
-            if GPIO.input(WARNING_PIN) == 1:
-                cmd = 'warning'
 
 
             if cmd is not None:
-                print(cmd)
                 publish.single(MQTT_CMD_PATH, cmd, hostname=MQTT_SERVER)
                 if cmd == 'left':
                     while GPIO.input(LEFT_SIGNAL_PIN) == 1:

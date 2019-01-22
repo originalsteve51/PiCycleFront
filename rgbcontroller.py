@@ -9,7 +9,7 @@ class RGBController(object):
 
     __pwm_left_channel = None
     __pwm_right_channel = None
-    __pwm_brake_channel = None
+    __pwm_record_channel = None
 
     def __init__(self):
 
@@ -19,12 +19,12 @@ class RGBController(object):
             GPIO.setup(pwm_channels, GPIO.OUT)
             RGBController.__pwm_left_channel = GPIO.PWM(LEFT_PWM_CHANNEL, 50)
             RGBController.__pwm_right_channel = GPIO.PWM(RIGHT_PWM_CHANNEL, 50)
-            RGBController.__pwm_brake_channel = GPIO.PWM(BRAKE_PWM_CHANNEL, 50)
+            RGBController.__pwm_record_channel = GPIO.PWM(RECORD_PWM_CHANNEL, 50)
 
             # Fully dimmed to begin
             RGBController.__pwm_left_channel.start(0)
             RGBController.__pwm_right_channel.start(0)
-            RGBController.__pwm_brake_channel.start(0)
+            RGBController.__pwm_record_channel.start(0)
 
     def turn_on(self, channel):
         duty_cycle = 100
@@ -33,11 +33,11 @@ class RGBController(object):
         if (channel == 'r'):
             RGBController.__pwm_right_channel.ChangeDutyCycle(duty_cycle)
         if (channel == 'g'):
-            RGBController.__pwm_brake_channel.ChangeDutyCycle(duty_cycle)
+            RGBController.__pwm_record_channel.ChangeDutyCycle(duty_cycle)
         if (channel == 'b'):
             RGBController.__pwm_left_channel.ChangeDutyCycle(duty_cycle)
             RGBController.__pwm_right_channel.ChangeDutyCycle(duty_cycle)
-            RGBController.__pwm_brake_channel.ChangeDutyCycle(duty_cycle)
+            RGBController.__pwm_record_channel.ChangeDutyCycle(duty_cycle)
 
 
     def turn_off(self, channel):
@@ -47,11 +47,11 @@ class RGBController(object):
         if (channel == 'r'):
             RGBController.__pwm_right_channel.ChangeDutyCycle(duty_cycle)
         if (channel == 'g'):
-            RGBController.__pwm_brake_channel.ChangeDutyCycle(duty_cycle)
+            RGBController.__pwm_record_channel.ChangeDutyCycle(duty_cycle)
         if (channel == 'b'):
             RGBController.__pwm_left_channel.ChangeDutyCycle(duty_cycle)
             RGBController.__pwm_right_channel.ChangeDutyCycle(duty_cycle)
-            RGBController.__pwm_brake_channel.ChangeDutyCycle(duty_cycle)
+            RGBController.__pwm_record_channel.ChangeDutyCycle(duty_cycle)
 
     def go_dark(self):
         time_on = 0
